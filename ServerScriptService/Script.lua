@@ -1,5 +1,7 @@
 -- @ScriptType: Script
-function getCyclePoints(area: Part): {number}
+local p_indicator = script.point
+
+function makeCyclePoints(area: Part): {number}
 	local cyclePoints = {}
 	
 	-- Get vertices
@@ -30,9 +32,25 @@ function getCyclePoints(area: Part): {number}
 		end
 	end
 	
+	for x=0, sx do
+		for y=0, sy do
+			for z=0, sz do
+				local value = math.map(math.noise(x/sx,y/sy,z/sz), -1, 1, 0, 1) * factor
+				
+				local temp = p_indicator:Clone()
+				local n = value/factor
+				temp.Position = Vector3.new(x,y,z) + area.Position - area.Size/2
+				temp.Color = Color3.new(n, n, n)
+				temp.Parent = workspace
+				
+			end
+		end
+	end
+	
 	return cyclePoints, NumberRange.new(min, max)
 end
 
 local surfaceLevel = 0
-local points, range = getCyclePoints(workspace.Part)
+local target_space = workspace.Part
+local points, range = makeCyclePoints(target_space)
 print(points, range)
