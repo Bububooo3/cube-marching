@@ -1,5 +1,6 @@
 -- @ScriptType: Script
 local p_indicator = script.point
+local visibile = buffer.create(1)
 
 function makeCyclePoints(area: Part): {number}
 	local cyclePoints = {}
@@ -10,7 +11,7 @@ function makeCyclePoints(area: Part): {number}
 	local sx, sy, sz = area.Size.X, area.Size.Y, area.Size.Z
 	local max, min = 0, 0
 	local factor = 32
-	local increment = 4
+	local increment = sx --> Just get cube vertices
 	local surface_level = script:GetAttribute('surface_level')
 	
 	-- (From NavMesh attempt)
@@ -23,6 +24,21 @@ function makeCyclePoints(area: Part): {number}
 	--part_CFrame*CFrame.new(-part_size.X/2, -part_size.Y/2,part_size.Z/2) ----> Back Bottom Right
 	--part_CFrame*CFrame.new(-part_size.X/2, -part_size.Y/2,-part_size.Z/2) ----> Back Top Left
 	--part_CFrame*CFrame.new(part_size.X/2, -part_size.Y/2,part_size.Z/2) ----> Back Bottom Left
+
+	--[[
+	So it goes...
+		(x,y,z) - vertex_number :: pseudo coords
+		(0,0,0) - 0 :: Left Bottom Front
+		(0,0,1) - 1 :: Left Bottom Back
+		(0,1,0) - 2 :: Left Top Front
+		(0,1,1) - 3 :: Left Top Back
+		(1,0,0) - 4 :: Right Bottom Front
+		(1,0,1) - 5 :: Right Bottom Back
+		(1,1,0) - 6 :: Right Top Front
+		(1,1,1) - 7 :: Right Top Back
+
+		in order
+	]]
 	
 	for x=0, sx, increment do
 		for y=0, sy, increment do
@@ -35,20 +51,27 @@ function makeCyclePoints(area: Part): {number}
 			end
 		end
 	end
-	
+
+	local vertex = 0
 	for x=0, sx, increment do
 		for y=0, sy, increment do
 			for z=0, sz, increment do
 				local value = math.clamp(math.noise(x/sx,y/sy,z/sz), -1, 1)
-				if (value * factor) < surface_level then continue end
+				buffer.writeu8(visible, vertex, 1 and ((value * factor) < surface_level) or 0)
 				local temp = p_indicator:Clone()
 				local n = math.map(value, -1, 1, 0, 1)
 				temp.Position = Vector3.new(x,y,z) + area.Position - area.Size/2
 				temp.Color = Color3.new(n, n, n)
 				temp.Parent = workspace
 				table.insert(parts, temp)
+
+				vertex += 1
 			end
+
+			vertex += 1
 		end
+
+		vertex += 1
 	end
 	
 	local nr = NumberRange.new(min, max)
