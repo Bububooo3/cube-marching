@@ -1,4 +1,3 @@
--- @ScriptType: ModuleScript
 local tConstants = {}
 
 tConstants.cornerTable = {
